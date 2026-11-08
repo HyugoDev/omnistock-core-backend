@@ -155,6 +155,39 @@ public class WarehouseServiceImpl implements WarehouseService {
                 dto.getQuantity(), product.getName(), origin.getName(), destination.getName());
     }
 
+    @Override
+    @Transactional
+    public WarehouseResponseDTO updateWarehouse(Long id, WarehouseRequestDTO dto) {
+        Warehouse warehouse = warehouseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Almacén no encontrado con ID: " + id));
+
+        warehouse.setName(dto.getName().trim());
+        if (dto.getAddress() != null) {
+            warehouse.setAddress(dto.getAddress().trim());
+        }
+        if (dto.getActive() != null) {
+            warehouse.setActive(dto.getActive());
+        }
+        if (dto.getIsTransit() != null) {
+            warehouse.setIsTransit(dto.getIsTransit());
+        }
+
+        Warehouse updated = warehouseRepository.save(warehouse);
+        log.info("Almacén actualizado exitosamente: {} ({})", updated.getName(), updated.getCode());
+        return mapToResponse(updated);
+    }
+
+    @Override
+    @Transactional
+    public void deleteWarehouse(Long id) {
+        Warehouse warehouse = warehouseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Almacén no encontrado con ID: " + id));
+
+        warehouse.setActive(false);
+        warehouseRepository.save(warehouse);
+        log.info("Almacén desactivado exitosamente: {} ({})", warehouse.getName(), warehouse.getCode());
+    }
+
     private WarehouseResponseDTO mapToResponse(Warehouse warehouse) {
         return WarehouseResponseDTO.builder()
                 .id(warehouse.getId())

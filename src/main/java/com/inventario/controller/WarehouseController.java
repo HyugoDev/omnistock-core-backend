@@ -47,4 +47,17 @@ public class WarehouseController {
         warehouseService.transferStock(requestDTO);
         return ResponseEntity.ok(Map.of("message", "Transferencia de existencias procesada exitosamente"));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<WarehouseResponseDTO> updateWarehouse(
+            @PathVariable Long id,
+            @Valid @RequestBody WarehouseRequestDTO requestDTO) {
+        return ResponseEntity.ok(warehouseService.updateWarehouse(id, requestDTO));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteWarehouse(@PathVariable Long id) {
+        warehouseService.deleteWarehouse(id);
+        return ResponseEntity.noContent().build();
+    }
 }

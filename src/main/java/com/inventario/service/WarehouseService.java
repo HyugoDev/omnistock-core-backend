@@ -18,4 +18,8 @@ public interface WarehouseService {
     List<WarehouseStockResponseDTO> getStockByWarehouse(Long warehouseId);
 
     void transferStock(WarehouseTransferRequestDTO dto);
+
+    WarehouseResponseDTO updateWarehouse(Long id, WarehouseRequestDTO dto);
+
+    void deleteWarehouse(Long id);
 }
