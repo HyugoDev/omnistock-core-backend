@@ -75,6 +75,10 @@ public class ProductBatch {
         return this.expirationDate != null && this.expirationDate.isBefore(LocalDate.now());
     }
 
+    public boolean isNearExpiration() {
+        return isNearExpiration(30L);
+    }
+
     public boolean isNearExpiration(long daysThreshold) {
         if (this.expirationDate == null) return false;
         LocalDate thresholdDate = LocalDate.now().plusDays(daysThreshold);
