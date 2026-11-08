@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface ProductService {
     List<ProductResponseDTO> getAllProducts();
+    List<ProductResponseDTO> getAllProducts(Long warehouseId);
     ProductResponseDTO getProductById(Long id);
     ProductResponseDTO getProductByBarcode(String barcode);
     List<ProductResponseDTO> getLowStockProducts();

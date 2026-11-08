@@ -24,14 +24,38 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final com.inventario.repository.WarehouseStockRepository warehouseStockRepository;
 
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponseDTO> getAllProducts() {
-        return productRepository.findByActiveTrue()
-                .stream()
-                .map(this::mapToResponseDTO)
-                .toList();
+        return getAllProducts(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponseDTO> getAllProducts(Long warehouseId) {
+        List<Product> products = productRepository.findByActiveTrue();
+        if (warehouseId == null) {
+            return products.stream()
+                    .map(this::mapToResponseDTO)
+                    .toList();
+        }
+
+        return products.stream().map(product -> {
+            ProductResponseDTO dto = mapToResponseDTO(product);
+            warehouseStockRepository.findByWarehouseIdAndProductId(warehouseId, product.getId())
+                    .ifPresentOrElse(ws -> {
+                        dto.setCurrentStock(ws.getQuantity().intValue());
+                        dto.setMinStock(ws.getMinStock().intValue());
+                        dto.setRequiresRestock(ws.isLowStock());
+                    }, () -> {
+                        dto.setCurrentStock(0);
+                        dto.setMinStock(product.getMinStock() != null ? product.getMinStock() : 5);
+                        dto.setRequiresRestock(true);
+                    });
+            return dto;
+        }).toList();
     }
 
     @Override

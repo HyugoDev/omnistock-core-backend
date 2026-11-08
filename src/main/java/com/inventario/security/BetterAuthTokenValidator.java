@@ -42,9 +42,11 @@ public class BetterAuthTokenValidator {
 
     private Optional<AuthenticatedUser> validateSessionToken(String token) {
         String sql = """
-            SELECT u.id, u.email, u.name, u.role, u.banned, s.active_organization_id 
+            SELECT u.id, u.email, u.name, u.role, u.banned, s.active_organization_id,
+                   m.role as org_role, m.assigned_warehouse_id 
             FROM session s 
             JOIN "user" u ON s.user_id = u.id 
+            LEFT JOIN member m ON m.user_id = u.id AND m.organization_id = s.active_organization_id
             WHERE s.token = ? AND s.expires_at > CURRENT_TIMESTAMP
             """;
 
@@ -56,9 +58,23 @@ public class BetterAuthTokenValidator {
                     return Optional.<AuthenticatedUser>empty();
                 }
 
-                String role = rs.getString("role");
+                // Priorizar el rol que tiene el usuario dentro de la organización activa
+                String role = rs.getString("org_role");
+                if (role == null || role.isBlank()) {
+                    role = rs.getString("role");
+                }
                 if (role == null || role.isBlank()) {
                     role = "user";
+                }
+
+                String rawWhId = rs.getString("assigned_warehouse_id");
+                Long assignedWhId = null;
+                if (rawWhId != null && !rawWhId.isBlank()) {
+                    try {
+                        assignedWhId = Long.parseLong(rawWhId.trim());
+                    } catch (NumberFormatException ignored) {
+                        log.debug("ID de almacén asignado no numérico: {}", rawWhId);
+                    }
                 }
 
                 return Optional.of(AuthenticatedUser.builder()
@@ -67,6 +83,7 @@ public class BetterAuthTokenValidator {
                         .name(rs.getString("name"))
                         .role(role)
                         .activeOrganizationId(rs.getString("active_organization_id"))
+                        .assignedWarehouseId(assignedWhId)
                         .build());
             }, token);
         } catch (EmptyResultDataAccessException e) {

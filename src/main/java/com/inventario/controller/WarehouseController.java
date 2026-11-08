@@ -4,6 +4,7 @@ import com.inventario.dto.WarehouseRequestDTO;
 import com.inventario.dto.WarehouseResponseDTO;
 import com.inventario.dto.WarehouseStockResponseDTO;
 import com.inventario.dto.WarehouseTransferRequestDTO;
+import com.inventario.security.WarehouseSecurityService;
 import com.inventario.service.WarehouseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.Map;
 public class WarehouseController {
 
     private final WarehouseService warehouseService;
+    private final WarehouseSecurityService warehouseSecurityService;
 
     @GetMapping
     public ResponseEntity<List<WarehouseResponseDTO>> getAllWarehouses() {
@@ -28,6 +30,7 @@ public class WarehouseController {
 
     @GetMapping("/{id}")
     public ResponseEntity<WarehouseResponseDTO> getWarehouseById(@PathVariable Long id) {
+        warehouseSecurityService.validateCanOperateOnWarehouse(id);
         return ResponseEntity.ok(warehouseService.getWarehouseById(id));
     }
 
@@ -39,11 +42,13 @@ public class WarehouseController {
 
     @GetMapping("/{id}/stock")
     public ResponseEntity<List<WarehouseStockResponseDTO>> getStockByWarehouse(@PathVariable Long id) {
+        warehouseSecurityService.validateCanOperateOnWarehouse(id);
         return ResponseEntity.ok(warehouseService.getStockByWarehouse(id));
     }
 
     @PostMapping("/transfers")
     public ResponseEntity<Map<String, String>> transferStock(@Valid @RequestBody WarehouseTransferRequestDTO requestDTO) {
+        warehouseSecurityService.validateCanOperateOnWarehouse(requestDTO.getOriginWarehouseId());
         warehouseService.transferStock(requestDTO);
         return ResponseEntity.ok(Map.of("message", "Transferencia de existencias procesada exitosamente"));
     }

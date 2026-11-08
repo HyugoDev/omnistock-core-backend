@@ -17,4 +17,9 @@ public class AuthenticatedUser implements Serializable {
     private String name;
     private String role;
     private String activeOrganizationId;
+    private Long assignedWarehouseId;
+
+    public boolean isGlobalAdmin() {
+        return "owner".equalsIgnoreCase(role) || "admin".equalsIgnoreCase(role);
+    }
 }
