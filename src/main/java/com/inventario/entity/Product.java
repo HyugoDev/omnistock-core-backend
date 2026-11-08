@@ -1,5 +1,7 @@
 package com.inventario.entity;
 
+import com.inventario.entity.enums.ProductType;
+import com.inventario.entity.enums.UnitOfMeasure;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,11 +15,13 @@ import java.util.Objects;
 @Table(
     name = "products",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_product_barcode", columnNames = "barcode")
+        @UniqueConstraint(name = "uk_product_barcode", columnNames = "barcode"),
+        @UniqueConstraint(name = "uk_product_sku", columnNames = "sku")
     },
     indexes = {
         @Index(name = "idx_product_barcode", columnList = "barcode", unique = true),
-        @Index(name = "idx_product_name", columnList = "name")
+        @Index(name = "idx_product_name", columnList = "name"),
+        @Index(name = "idx_product_type", columnList = "product_type")
     }
 )
 @Getter
@@ -31,8 +35,11 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "barcode", nullable = false, unique = true, length = 50)
+    @Column(name = "barcode", nullable = false, length = 50)
     private String barcode;
+
+    @Column(name = "sku", length = 50)
+    private String sku;
 
     @Column(name = "name", nullable = false, length = 150)
     private String name;
@@ -40,27 +47,45 @@ public class Product {
     @Column(name = "description", length = 500)
     private String description;
 
-    // Regla Senior: DINERO SIEMPRE CON BigDecimal, NUNCA double o float (evita errores de redondeo)
-    @Column(name = "purchase_price", precision = 10, scale = 2)
+    // Naturaleza universal del artículo
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "product_type", nullable = false, length = 30)
+    private ProductType productType = ProductType.STANDARD;
+
+    // Unidad de medida física
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "unit_of_measure", nullable = false, length = 30)
+    private UnitOfMeasure unitOfMeasure = UnitOfMeasure.UNIT;
+
+    // Precios monetarios
+    @Column(name = "purchase_price", precision = 12, scale = 2)
     private BigDecimal purchasePrice;
 
-    @Column(name = "sale_price", nullable = false, precision = 10, scale = 2)
+    @Column(name = "sale_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal salePrice;
 
+    // Saldo agregado global (la distribución granular se encuentra en WarehouseStock)
     @Builder.Default
     @Column(name = "current_stock", nullable = false)
-    private Integer currentStock  = 0;
+    private Integer currentStock = 0;
 
     @Builder.Default
     @Column(name = "min_stock", nullable = false)
     private Integer minStock = 5;
 
-    // Borrado lógico (Soft delete): los productos con ventas nunca se borran físicamente
+    // Atributos dinámicos en formato JSON para adaptabilidad a cualquier industria
+    // Ej: {"laboratorio": "Roche", "talla": "M", "voltaje": "110V"}
+    @Column(name = "attributes_json", columnDefinition = "TEXT")
+    private String attributesJson;
+
+    // Borrado lógico (Soft Delete)
     @Builder.Default
     @Column(name = "active", nullable = false)
     private Boolean active = true;
 
-    // Regla Senior: Relaciones @ManyToOne SIEMPRE en FetchType.LAZY para evitar el problema N+1
+    // Categoría
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
@@ -73,7 +98,6 @@ public class Product {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Método de dominio: Regla de negocio para saber si requiere reabastecimiento
     public boolean requiresRestock() {
         return this.currentStock != null && this.currentStock <= this.minStock;
     }
@@ -90,6 +114,4 @@ public class Product {
     public int hashCode() {
         return getClass().hashCode();
     }
-
-
 }
