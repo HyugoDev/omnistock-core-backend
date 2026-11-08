@@ -12,9 +12,12 @@ import java.util.Objects;
 @Entity
 @Table(
     name = "products",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_product_barcode", columnNames = "barcode")
+    },
     indexes = {
-        @Index(name = "idx_product_barcode", columnList = "barcode"),
-        @Index(name = "idx_product_namee", columnList = "name")
+        @Index(name = "idx_product_barcode", columnList = "barcode", unique = true),
+        @Index(name = "idx_product_name", columnList = "name")
     }
 )
 @Getter
