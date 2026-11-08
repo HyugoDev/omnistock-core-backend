@@ -42,7 +42,7 @@ public class BetterAuthTokenValidator {
 
     private Optional<AuthenticatedUser> validateSessionToken(String token) {
         String sql = """
-            SELECT u.id, u.email, u.name, u.role, u.banned 
+            SELECT u.id, u.email, u.name, u.role, u.banned, s.active_organization_id 
             FROM session s 
             JOIN "user" u ON s.user_id = u.id 
             WHERE s.token = ? AND s.expires_at > CURRENT_TIMESTAMP
@@ -66,6 +66,7 @@ public class BetterAuthTokenValidator {
                         .email(rs.getString("email"))
                         .name(rs.getString("name"))
                         .role(role)
+                        .activeOrganizationId(rs.getString("active_organization_id"))
                         .build());
             }, token);
         } catch (EmptyResultDataAccessException e) {
