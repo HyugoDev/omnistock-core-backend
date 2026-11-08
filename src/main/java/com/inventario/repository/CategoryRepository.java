@@ -1,0 +1,16 @@
+package com.inventario.repository;
+
+import com.inventario.entity.Category;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+
+import java.util.List;
+
+
+public interface CategoryRepository extends JpaRepository<Category, Long> {
+
+    // Spring Data genera automáticamente la consulta: WHERE active = true
+    List<Category> findByActiveTrue();
+
+}
